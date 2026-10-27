@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f6f5f2">
+<title>图片精读 · English Reader</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23b1570f'/%3E%3Ctext x='16' y='22' font-family='Georgia,serif' font-size='15' fill='%23fff' text-anchor='middle'%3EAa%3C/text%3E%3C/svg%3E">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="图片精读">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">Aa</span>
+      <span class="brand-name">图片精读</span>
+    </div>
+    <div class="topbar-actions">
+      <button id="btnWordbook" class="btn ghost" hidden>生词本 <span class="badge" id="wbBadge">0</span></button>
+      <button id="btnAdd" class="btn">添加图片</button>
+      <button id="btnClear" class="btn ghost" hidden>清空</button>
+    </div>
+  </header>
+
+  <main class="stage" id="stage">
+
+    <!-- ============ 左侧：图片 / 文本 ============ -->
+    <section class="reader" id="reader">
+
+      <div class="empty" id="emptyState">
+        <label for="fileInput" class="dropzone" id="dropzone">
+          <div class="dz-icon">
+            <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 16.5V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>
+              <circle cx="8.5" cy="9.5" r="1.5"/>
+              <path d="m21 16-4.5-4.5L7 21"/>
+            </svg>
+          </div>
+          <p class="dz-title">拍照或选择书页图片</p>
+          <p class="dz-sub">可以一次选多张，之后也能继续添加</p>
+        </label>
+      </div>
+
+      <div class="viewer" id="viewer" hidden>
+        <div class="viewport" id="viewport">
+          <div class="canvas-wrap" id="canvasWrap">
+            <img id="pageImg" alt="书页" draggable="false">
+            <div class="overlay" id="overlay"></div>
+          </div>
+        </div>
+
+        <div class="pager">
+          <button class="icon-btn" id="prevPage" aria-label="上一页">‹</button>
+          <span class="page-info" id="pageInfo">1 / 1</span>
+          <button class="icon-btn" id="nextPage" aria-label="下一页">›</button>
+          <button class="icon-btn" id="rotateBtn" aria-label="旋转 90 度并重新识别" title="图歪了？转 90° 重新识别">⟳</button>
+          <span class="spacer"></span>
+          <button class="chip" id="modeToggle">文本模式</button>
+          <button class="chip" id="jumpToggle" hidden>跳选：关</button>
+        </div>
+
+        <div class="textlayer" id="textLayer" hidden></div>
+      </div>
+
+    </section>
+
+    <!-- ============ 右侧：解析栏 ============ -->
+    <aside class="panel" id="panel">
+      <div class="panel-handle" id="panelHandle"></div>
+      <div class="panel-scroll" id="panelScroll">
+        <div class="panel-empty" id="panelEmpty">
+          <p class="pe-title">点一个单词试试</p>
+          <p class="pe-sub">图上的词可以直接点；也可以划选一段短语或句子。</p>
+          <ul class="pe-tips">
+            <li><b>点词</b>：完整义项 + 变形</li>
+            <li><b>拖动</b>：划选取词组/句子</li>
+            <li><b>长按 / Ctrl</b>：跳选，跳过中间不要的部分</li>
+          </ul>
+        </div>
+        <div class="panel-body" id="panelBody"></div>
+      </div>
+    </aside>
+
+    <div class="scrim" id="scrim" hidden></div>
+
+  </main>
+
+  <div class="busy" id="busy" hidden>
+    <div class="busy-box">
+      <div class="spinner"></div>
+      <p id="busyText">正在识别…</p>
+      <div class="progress"><div class="progress-bar" id="busyBar"></div></div>
+    </div>
+  </div>
+
+  <!-- 生词本 -->
+  <div class="sheet" id="wordbook" hidden>
+    <div class="sheet-inner">
+      <div class="sheet-head">
+        <div>
+          <h2 class="sheet-title">生词本</h2>
+          <p class="sheet-sub" id="wbCount">0 个词</p>
+        </div>
+        <button class="icon-btn" id="wbClose" aria-label="关闭">✕</button>
+      </div>
+      <div class="sheet-actions">
+        <button class="mini-btn" id="wbExportCsv">导出 CSV</button>
+        <button class="mini-btn" id="wbExportTsv">导出 Anki</button>
+        <span class="spacer"></span>
+        <button class="mini-btn danger" id="wbClear">清空</button>
+      </div>
+      <div class="sheet-body" id="wbList"></div>
+    </div>
+  </div>
+
+</div>
+
+<input type="file" id="fileInput" accept="image/*" multiple hidden>
+
+<script src="vendor/tesseract/tesseract.min.js"></script>
+<script type="module" src="js/app.js"></script></body>
+</html>
